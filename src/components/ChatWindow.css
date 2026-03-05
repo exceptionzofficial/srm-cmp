@@ -192,9 +192,9 @@
 }
 
 .message-sender {
-    font-size: 0.75rem;
-    margin-bottom: 4px;
-    font-weight: 600;
+    font-size: 0.78rem;
+    margin-bottom: 6px;
+    font-weight: 800;
 }
 
 .message.sent .message-sender {
@@ -203,7 +203,8 @@
 }
 
 .message.received .message-sender {
-    color: #b2bec3;
+    color: #2d3436;
+    /* Darker color for better visibility */
 }
 
 .message-content {
@@ -873,4 +874,37 @@
     color: #888;
     padding: 24px;
     font-size: 0.9rem;
+}
+
+/* Date Separator */
+.date-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem 0;
+    position: relative;
+    width: 100%;
+}
+
+.date-separator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #eee;
+    z-index: 1;
+}
+
+.date-separator span {
+    position: relative;
+    z-index: 2;
+    background-color: #f8f9fa;
+    padding: 0 1rem;
+    color: #636e72;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }

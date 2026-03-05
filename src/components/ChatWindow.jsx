@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiSend, FiMessageSquare, FiBarChart2, FiX, FiPlus, FiImage, FiPaperclip, FiCheckCircle, FiClock, FiUser, FiUsers, FiUserPlus, FiArrowDown, FiSearch } from 'react-icons/fi';
 import { getMessages, sendMessage, markMessageAsRead, votePoll, updateGroup, getEmployees } from '../services/api';
+import DashboardsView from './DashboardsView';
 import './ChatWindow.css';
 
 const ChatWindow = ({ group, currentUser }) => {
@@ -139,9 +140,13 @@ const ChatWindow = ({ group, currentUser }) => {
         if ((!newMessage.trim() && !selectedFile) || !group?.id) return;
 
         try {
+            // Ensure we use the most up-to-date name
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const senderName = storedUser.name || currentUser.name || "Cluster Manager";
+
             let payload = {
                 content: newMessage,
-                senderName: currentUser.name || "User",
+                senderName: senderName,
                 senderId: currentUser.id,
                 type: 'text'
             };
@@ -149,7 +154,7 @@ const ChatWindow = ({ group, currentUser }) => {
             if (selectedFile) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
-                formData.append('senderName', currentUser.name || "User");
+                formData.append('senderName', senderName);
                 formData.append('senderId', currentUser.id);
                 // Type is handled by backend or derived from file
                 payload = formData;
@@ -309,6 +314,42 @@ const ChatWindow = ({ group, currentUser }) => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const getSenderName = (msg) => {
+        if (msg.senderName) return msg.senderName;
+        // Fallback mapping for known admin IDs
+        const idMapping = {
+            'hr-admin-1': 'HR Manager',
+            'finance-admin-1': 'Finance Manager',
+            'legal-admin-1': 'Legal Manager',
+            'production-admin-1': 'Production Manager',
+            'quality-admin-1': 'Quality Manager',
+            'cluster-admin-1': 'Cluster Manager',
+            'branch-admin-1': 'Branch Manager',
+            'retail-admin-1': 'Retail Manager',
+            'admin-1': 'Super Admin'
+        };
+
+        if (idMapping[msg.senderId]) return idMapping[msg.senderId];
+
+        // Try to find in employees list if available
+        const emp = employees.find(e => e.employeeId === msg.senderId);
+        if (emp) return emp.name;
+
+        return 'User';
+    };
+
+    const formatDateSeparator = (timestamp) => {
+        if (!timestamp) return '';
+        const date = timestamp._seconds ? new Date(timestamp._seconds * 1000) : new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        if (date.toDateString() === today.toDateString()) return 'Today';
+        if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+        return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
     const renderPoll = (msg) => {
         const totalVotes = Object.values(msg.pollData?.votes || {}).length;
         const myVote = msg.pollData?.votes?.[currentUser.id];
@@ -425,6 +466,14 @@ const ChatWindow = ({ group, currentUser }) => {
                         <FiUsers className="tab-icon" />
                         <span>Members</span>
                     </button>
+                    <button
+                        className={`vertical-tab-btn ${activeTab === 'dashboards' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('dashboards')}
+                        title="Dashboards"
+                    >
+                        <FiBarChart2 className="tab-icon" />
+                        <span>Dashboards</span>
+                    </button>
                 </div>
 
                 <div className="chat-content-area">
@@ -437,16 +486,27 @@ const ChatWindow = ({ group, currentUser }) => {
                                         <p>No messages yet. Say hello!</p>
                                     </div>
                                 ) : (
-                                    messages.map((msg) => {
+                                    messages.map((msg, index) => {
                                         const isOwn = msg.senderId === currentUser.id;
+                                        const msgDate = formatDateSeparator(msg.timestamp);
+                                        const prevMsgDate = index > 0 ? formatDateSeparator(messages[index - 1].timestamp) : null;
+                                        const showDateSeparator = msgDate !== prevMsgDate;
+
                                         return (
-                                            <div key={msg.id} className={`message ${isOwn ? 'sent' : 'received'} ${msg.type === 'poll' ? 'poll-message' : ''}`}>
-                                                {!isOwn && <span className="message-sender">{msg.senderName}</span>}
-                                                {msg.type === 'poll' ? renderPoll(msg) :
-                                                    (msg.type === 'image' || msg.type === 'video') ? renderMedia(msg) :
-                                                        <div className="message-content">{msg.content}</div>
-                                                }
-                                                {msg.type !== 'poll' && <span className="message-time">{formatTime(msg.timestamp)}</span>}
+                                            <div key={msg.id}>
+                                                {showDateSeparator && (
+                                                    <div className="date-separator">
+                                                        <span>{msgDate}</span>
+                                                    </div>
+                                                )}
+                                                <div className={`message ${isOwn ? 'sent' : 'received'} ${msg.type === 'poll' ? 'poll-message' : ''}`}>
+                                                    {!isOwn && <span className="message-sender">{getSenderName(msg)}</span>}
+                                                    {msg.type === 'poll' ? renderPoll(msg) :
+                                                        (msg.type === 'image' || msg.type === 'video') ? renderMedia(msg) :
+                                                            <div className="message-content">{msg.content}</div>
+                                                    }
+                                                    {msg.type !== 'poll' && <span className="message-time">{formatTime(msg.timestamp)}</span>}
+                                                </div>
                                             </div>
                                         );
                                     })
@@ -558,6 +618,8 @@ const ChatWindow = ({ group, currentUser }) => {
                                 ))}
                             </div>
                         </div>
+                    ) : activeTab === 'dashboards' ? (
+                        <DashboardsView group={group} />
                     ) : null}
                 </div> {/* End of chat-content-area */}
             </div> {/* End of chat-body */}

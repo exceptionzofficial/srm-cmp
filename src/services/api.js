@@ -249,6 +249,11 @@ export const deleteCluster = async (id) => {
     return response.data;
 };
 
+export const getClusterDetails = async (id) => {
+    const response = await api.get(`/api/clusters/${id}/details`);
+    return response.data;
+};
+
 // --- Auth ---
 export const loginUser = async (email, password) => {
     const response = await api.post('/api/auth/login', { email, password });

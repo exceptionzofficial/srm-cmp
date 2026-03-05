@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiLayers, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
-import { getClustersByManager, getBranches, updateCluster, deleteCluster } from '../services/api';
+import { FiLayers, FiEdit2, FiTrash2, FiSearch, FiExternalLink, FiUser, FiFileText, FiX } from 'react-icons/fi';
+import { getClustersByManager, getBranches, updateCluster, deleteCluster, getClusterDetails } from '../services/api';
 
 const Clusters = () => {
     const [clusters, setClusters] = useState([]);
@@ -28,6 +28,11 @@ const Clusters = () => {
         isActive: true
     });
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Details Modal State
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [selectedClusterDetails, setSelectedClusterDetails] = useState(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
 
     // Get logged-in user
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -222,6 +227,20 @@ const Clusters = () => {
         }
     };
 
+    const handleViewDetails = async (clusterId) => {
+        try {
+            setDetailsLoading(true);
+            setIsDetailsModalOpen(true);
+            const res = await getClusterDetails(clusterId);
+            setSelectedClusterDetails(res.cluster);
+        } catch (err) {
+            console.error('Error fetching cluster details:', err);
+            setError('Failed to load cluster details.');
+        } finally {
+            setDetailsLoading(false);
+        }
+    };
+
     const getBranchNames = (ids) => {
         if (!ids || ids.length === 0) return 'No branches assigned';
         return ids.map(id => {
@@ -311,6 +330,9 @@ const Clusters = () => {
                                         </td>
                                         <td style={{ textAlign: 'right' }}>
                                             <div className="action-buttons" style={{ justifyContent: 'flex-end' }}>
+                                                <button className="action-btn edit" style={{ background: '#f0f9ff', color: '#0369a1' }} onClick={() => handleViewDetails(cluster.clusterId)} title="View Details">
+                                                    <FiExternalLink />
+                                                </button>
                                                 <button className="action-btn edit" onClick={() => handleOpenModal(cluster)}>
                                                     <FiEdit2 />
                                                 </button>
@@ -394,6 +416,111 @@ const Clusters = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal for Details */}
+            {isDetailsModalOpen && (
+                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="modal-content card" style={{ width: '800px', maxWidth: '95vw', maxHeight: '90vh', padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                            <h2 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <FiLayers /> {selectedClusterDetails?.name || 'Cluster Details'}
+                            </h2>
+                            <button onClick={() => setIsDetailsModalOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '20px', color: '#64748b' }}>
+                                <FiX />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                            {detailsLoading ? (
+                                <div style={{ textAlign: 'center', padding: '40px' }}>
+                                    <div className="spinner"></div>
+                                    <p style={{ marginTop: '15px', color: '#64748b' }}>Loading cluster details...</p>
+                                </div>
+                            ) : selectedClusterDetails ? (
+                                <>
+                                    {/* Managers Section */}
+                                    <section style={{ marginBottom: '32px' }}>
+                                        <h3 style={{ fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}>
+                                            <FiUser style={{ color: 'var(--primary)' }} /> Assigned Managers
+                                        </h3>
+                                        {selectedClusterDetails.assignedManagers?.length > 0 ? (
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                                                {selectedClusterDetails.assignedManagers.map(mgr => (
+                                                    <div key={mgr.managerId} style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white' }}>
+                                                        <div style={{ fontWeight: '600', color: '#1e293b' }}>{mgr.name}</div>
+                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>{mgr.role}</div>
+                                                        <div style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '4px' }}>
+                                                            {branches.find(b => b.branchId === mgr.branchId)?.name || 'Unknown Branch'}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p style={{ color: '#94a3b8', fontSize: '14px', fontStyle: 'italic' }}>No managers specifically assigned to branches in this cluster.</p>
+                                        )}
+                                    </section>
+
+                                    {/* Requests Section */}
+                                    <section>
+                                        <h3 style={{ fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}>
+                                            <FiFileText style={{ color: 'var(--primary)' }} /> Branch Requests
+                                        </h3>
+                                        <div className="table-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                            <table style={{ margin: 0 }}>
+                                                <thead>
+                                                    <tr style={{ background: '#f8fafc' }}>
+                                                        <th>Employee</th>
+                                                        <th>Type</th>
+                                                        <th>Branch</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedClusterDetails.branchRequests?.length > 0 ? (
+                                                        selectedClusterDetails.branchRequests.map(req => (
+                                                            <tr key={req.requestId}>
+                                                                <td>
+                                                                    <div style={{ fontWeight: '500' }}>{req.employeeName}</div>
+                                                                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>ID: {req.employeeId}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <span style={{ fontSize: '12px', fontWeight: '500' }}>{req.type}</span>
+                                                                </td>
+                                                                <td>
+                                                                    <div style={{ fontSize: '12px' }}>
+                                                                        {branches.find(b => b.branchId === req.branchId)?.name || 'Unknown'}
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <span className={`badge badge-${req.status === 'APPROVED' ? 'success' :
+                                                                            req.status === 'REJECTED' ? 'danger' : 'warning'
+                                                                        }`} style={{ fontSize: '10px' }}>
+                                                                        {req.status}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>No requests found for this cluster.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </section>
+                                </>
+                            ) : null}
+                        </div>
+
+                        <div style={{ padding: '16px 24px', borderTop: '1px solid #eee', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,0 +1,191 @@
+.dashboards-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+    background: #f8fafc;
+    overflow-y: auto;
+}
+
+.dashboards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header-left h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.header-left span {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.refresh-btn svg.spinning {
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.dashboards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.branch-stat-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.branch-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.branch-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.branch-card-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #334155;
+    font-weight: 600;
+}
+
+.status-indicator {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.status-indicator.online {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.stat-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.stat-icon.sales {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.stat-icon.attendance {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.stat-icon.requests {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-info label {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.stat-info .value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.branch-card-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 11px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dashboards-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
